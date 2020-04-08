@@ -54,6 +54,9 @@ class humidity extends eqLogic {
 
       log::add('humidity', 'debug', '################ sensorHumidity : ' . $_option['value'] . '% ############');
 
+      // il faut évaluer selon humidité actuelle et consigne si besoin de on ou off
+      $humidity->evaluateHumidity();
+
     }
 
     public static function sensorConsoElec($_option) { // fct appelée par le listener de la conso elec
@@ -66,11 +69,62 @@ class humidity extends eqLogic {
 
     /*     * *********************Méthodes d'instance************************* */
 
-    public function humidity($_cmd) {
+    public function cmdOnOff($_cmd) { // $_cmd=1 ou 0 selon si cmd recue demande ON ou OFF
 
       log::add('humidity', 'debug', '################ Humidity ' . $_cmd . ' ############');
 
-      $this->execActions('action_on');
+      if($_cmd){ // ON demandé
+
+        // il faut évaluer selon humidité actuelle et consigne si besoin de on ou off
+        $this->evaluateHumidity();
+
+      } else { // OFF demandé, on coupe
+
+        $this->execActions('action_off');
+
+      }
+
+    }
+
+    public function evaluateHumidity() {
+
+      log::add('humidity', 'debug', '################ evaluate Humidity ############');
+
+      // Aller chercher les infos dans la conf :
+        // "Humidificateur" ou "Deshumidificateur"
+        $type = $this->getConfiguration('humidity_type'); //'humid' ou 'deshumid'
+        // consigne voulue
+        $target = $this->getConfiguration('target_humidity');
+
+        if(is_numeric($target)){
+          log::add('humidity', 'debug', 'On a direct une valeur numeric, OK');
+        } else {
+          preg_match_all("/#([0-9]*)#/", $target, $matches);
+
+          if(isset($matches[1][0])){
+            $target = jeedom::evaluateExpression($target);
+            log::add('humidity', 'debug', 'On a trouvé une cmd Jeedom : ' . $matches[1][0] . ', sa valeur : ' . $target);
+
+          }
+
+        }
+
+
+/*
+        foreach ($matches[1] as $matche) {
+          log::add('humidity', 'debug', 'matche : ' . $matche);
+        }*/
+        // valeur capteur humidité
+        $value = jeedom::evaluateExpression($this->getConfiguration('sensor_humidity'));
+
+        log::add('humidity', 'debug', 'type : ' . $type . ' - target : ' . $target . ' - value : ' . $value);
+
+      // Si "Humidificateur" && valeur <= consigne => action_on
+      // Si "Humidificateur" && valeur > consigne => action_off
+
+      // Si "Deshumidificateur" && valeur < consigne => action_off
+      // Si "Deshumidificateur" && valeur >=a consigne => action_on
+
 
 
     }
@@ -333,13 +387,13 @@ class humidityCmd extends cmd {
 
         log::add('humidity', 'info', $this->getHumanName() . ' - ON');
 
-        $eqLogic->humidity(1);
+        $eqLogic->cmdOnOff(1);
 
       } else if ($this->getLogicalId() == 'humidity_off') { // appel de la commande action "off"
 
         log::add('humidity', 'info', $this->getHumanName() . ' - OFF');
 
-        $eqLogic->humidity(0);
+        $eqLogic->cmdOnOff(0);
 
       } else { // sinon c'est un sensor et on veut juste sa valeur
 
