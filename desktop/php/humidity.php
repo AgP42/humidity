@@ -2,7 +2,7 @@
 if (!isConnect('admin')) {
 	throw new Exception('{{401 - Accès non autorisé}}');
 }
-$plugin = plugin::byId('template');
+$plugin = plugin::byId('humidity');
 sendVarToJS('eqType', $plugin->getId());
 $eqLogics = eqLogic::byType($plugin->getId());
 ?>
@@ -22,7 +22,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
     <span>{{Configuration}}</span>
   </div>
   </div>
-  <legend><i class="fas fa-table"></i> {{Mes templates}}</legend>
+  <legend><i class="fas fa-table"></i> {{Mes humidity}}</legend>
 	   <input class="form-control" placeholder="{{Rechercher}}" id="in_searchEqlogic" />
 <div class="eqLogicThumbnailContainer">
     <?php
@@ -119,5 +119,5 @@ foreach (jeeObject::all() as $object) {
 </div>
 </div>
 
-<?php include_file('desktop', 'template', 'js', 'template');?>
+<?php include_file('desktop', 'humidity', 'js', 'humidity');?>
 <?php include_file('core', 'plugin.template', 'js');?>
