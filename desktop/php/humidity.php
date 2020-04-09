@@ -146,7 +146,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
             </div>
 
             <div class="form-group">
-              <label class="col-sm-2 control-label">{{Consommation électrique}}<sup><i class="fas fa-question-circle tooltips" title="{{}}"></i></sup></label>
+              <label class="col-sm-2 control-label">{{Puissance électrique}}<sup><i class="fas fa-question-circle tooltips" title="{{}}"></i></sup></label>
               <div class="col-sm-4">
                 <div class="input-group">
                   <input type="text" class="eqLogicAttr form-control tooltips roundedLeft" data-l1key="configuration" data-l2key="conso"/>

@@ -16,6 +16,11 @@
  * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
  */
 
+// TODO : listener sur la consigne ?
+// Gerer l'ajout de chauffage pour mieux deshumidifier
+// ajouter seuils pour ne pas bagoter autour de la consigne
+// ajouter seuils detection non-conso
+
 /* * ***************************Includes********************************* */
 require_once __DIR__  . '/../../../../core/php/core.inc.php';
 
@@ -48,22 +53,23 @@ class humidity extends eqLogic {
       }
      */
 
-    public static function sensorHumidity($_option) { // fct appelée par le listener du capteur d'humidité
+    public static function listenerHumidity($_option) { // fct appelée par le listener du capteur d'humidité ou de la cmd de consigne
 
       $humidity = humidity::byId($_option['humidity_id']); // on prend l'eqLogic du trigger qui nous a appelé
 
-      log::add('humidity', 'debug', '################ sensorHumidity : ' . $_option['value'] . '% ############');
+      log::add('humidity', 'debug', '################ listenerHumidity : ' . $_option['value'] . '% ############');
 
       // il faut évaluer selon humidité actuelle et consigne si besoin de on ou off
       $humidity->evaluateHumidity();
 
     }
 
+
     public static function sensorConsoElec($_option) { // fct appelée par le listener de la conso elec
 
       $humidity = humidity::byId($_option['humidity_id']); // on prend l'eqLogic du trigger qui nous a appelé
 
-      log::add('humidity', 'debug', '################ sensorConsoElec : ' . $_option['value'] . 'Wh ############');
+      log::add('humidity', 'debug', '################ sensorConsoElec : ' . $_option['value'] . 'W ############');
 
     }
 
@@ -75,11 +81,12 @@ class humidity extends eqLogic {
 
       if($_cmd){ // ON demandé
 
-        // il faut évaluer selon humidité actuelle et consigne si besoin de on ou off
-        $this->evaluateHumidity();
+        $this->setCache('etat', 1);
+        $this->evaluateHumidity(); // il faut évaluer selon humidité actuelle et consigne si besoin de on ou off
 
       } else { // OFF demandé, on coupe
 
+        $this->setCache('etat', 0);
         $this->execActions('action_off');
 
       }
@@ -88,44 +95,36 @@ class humidity extends eqLogic {
 
     public function evaluateHumidity() {
 
-      log::add('humidity', 'debug', '################ evaluate Humidity ############');
 
-      // Aller chercher les infos dans la conf :
-        // "Humidificateur" ou "Deshumidificateur"
-        $type = $this->getConfiguration('humidity_type'); //'humid' ou 'deshumid'
-        // consigne voulue
-        $target = $this->getConfiguration('target_humidity');
+      if($this->getCache('etat') && $this->getIsEnable() == 1){ // seulement si on avait demandé ON et eq est actif. Si OFF ou inactif, on fait rien
 
-        if(is_numeric($target)){
-          log::add('humidity', 'debug', 'On a direct une valeur numeric, OK');
-        } else {
-          preg_match_all("/#([0-9]*)#/", $target, $matches);
+        log::add('humidity', 'debug', '################ evaluate Humidity ############');
 
-          if(isset($matches[1][0])){
-            $target = jeedom::evaluateExpression($target);
-            log::add('humidity', 'debug', 'On a trouvé une cmd Jeedom : ' . $matches[1][0] . ', sa valeur : ' . $target);
+        // On va aller chercher les infos
+        $type = $this->getConfiguration('humidity_type'); //'humid' ou 'deshumid' => direct dans la conf
 
-          }
-
+        $order = $this->getCmd(null, 'order');
+        if (is_object($order)) {
+          $target = $order->execCmd(); // la consigne => via la cmd info qui est actualisée soit via une autre cmd, soit via la conf, soit via le slider du dashboard
         }
 
-
-/*
-        foreach ($matches[1] as $matche) {
-          log::add('humidity', 'debug', 'matche : ' . $matche);
-        }*/
-        // valeur capteur humidité
-        $value = jeedom::evaluateExpression($this->getConfiguration('sensor_humidity'));
+        $value = jeedom::evaluateExpression($this->getConfiguration('sensor_humidity')); // valeur courante du capteur humidité
 
         log::add('humidity', 'debug', 'type : ' . $type . ' - target : ' . $target . ' - value : ' . $value);
 
-      // Si "Humidificateur" && valeur <= consigne => action_on
-      // Si "Humidificateur" && valeur > consigne => action_off
+        // On a toutes nos infos, on peut lancer la logique
 
-      // Si "Deshumidificateur" && valeur < consigne => action_off
-      // Si "Deshumidificateur" && valeur >=a consigne => action_on
+        if($type == 'humid' && $value <= $target){
+          $this->execActions('action_on');
+        } else if($type == 'humid' && $value > $target){
+          $this->execActions('action_off');
+        } else if($type == 'deshumid' && $value < $target){
+          $this->execActions('action_off');
+        } else if($type == 'deshumid' && $value >= $target){
+          $this->execActions('action_on');
+        }
 
-
+      }
 
     }
 
@@ -244,7 +243,60 @@ class humidity extends eqLogic {
           $cmd->event($cmd->execute());
         }
 
-        if($this->getConfiguration('conso')!=''){ //si on a une commande HC definie
+        // pour la consigne il nous faut une info et une action slider
+        // l'info est liée à la cmd donnée en conf, ou initialisée par une valeur fixe en conf ou changé par un slider sur le dashboard
+        $order = $this->getCmd(null, 'order');
+        if (!is_object($order)) {
+          $order = new humidityCmd();
+          $order->setIsVisible(0);
+          $order->setUnite('%');
+          $order->setName(__('Consigne', __FILE__));
+          $order->setConfiguration('historizeMode', 'none');
+          $order->setIsHistorized(1);
+        }
+        $order->setEqLogic_id($this->getId());
+        $order->setType('info');
+        $order->setSubType('numeric');
+        $order->setLogicalId('order');
+        $order->setValue($this->getConfiguration('target_humidity'));
+        $order->setConfiguration('minValue', 0);
+        $order->setConfiguration('maxValue', 100);
+        $order->save();
+
+        if(!is_numeric($this->getConfiguration('target_humidity'))){ // si notre champs n'est pas direct un nombre, c'est que ca doit etre une cmd, on va l'executer
+
+          // log::add('humidity', 'warning', '$order->execCmd() : ' . $order->execCmd() . ' $order->execute() : ' . $order->execute());
+
+          // va chopper la valeur de la commande puis la suivre a chaque changement
+          $order->setCollectDate('');
+          $order->event($order->execute());
+
+        } else { // sinon c'est une valeur et on va la prendre telle quelle
+          $order->setCollectDate('');
+          $order->event($this->getConfiguration('target_humidity'));
+        }
+
+        // le slider du dashboard
+        $humidity = $this->getCmd(null, 'humidity_target');
+        if (!is_object($humidity)) {
+          $humidity = new humidityCmd();
+          $humidity->setTemplate('dashboard', 'humidity');
+          $humidity->setTemplate('mobile', 'humidity');
+          $humidity->setUnite('%');
+          $humidity->setName(__('Changer Consigne', __FILE__));
+          $humidity->setIsVisible(1);
+        }
+        $humidity->setEqLogic_id($this->getId());
+        $humidity->setConfiguration('minValue', 0);
+        $humidity->setConfiguration('maxValue', 100);
+        $humidity->setType('action');
+        $humidity->setSubType('slider');
+        $humidity->setLogicalId('humidity_target');
+        $humidity->setValue($order->getId());
+        $humidity->save();
+
+
+        if($this->getConfiguration('conso')!=''){ //si on a une commande de conso definie
 
           $cmd = $this->getCmd(null, 'conso_elec');
           if (!is_object($cmd)) {
@@ -262,7 +314,7 @@ class humidity extends eqLogic {
           $cmd->setValue($this->getConfiguration('conso'));
           $cmd->setType('info');
           $cmd->setSubType('numeric');
-          $cmd->setUnite('Wh');
+          $cmd->setUnite('W');
           $cmd->save();
 
           // va chopper la valeur de la commande puis la suivre a chaque changement
@@ -286,8 +338,8 @@ class humidity extends eqLogic {
           foreach ($this->getCmd() as $cmd) {
 
             // on assigne la fonction selon le type de capteur
-            if ($cmd->getLogicalId() == 'sensor_humidity') {
-              $listenerFunction = 'sensorHumidity';
+            if ($cmd->getLogicalId() == 'sensor_humidity' || ($cmd->getLogicalId() == 'order' && !is_numeric($cmd->getValue()))) { // le capteur d'humidité et la consigne si c'est une cmd
+              $listenerFunction = 'listenerHumidity';
             } else if ($cmd->getLogicalId() == 'conso_elec') {
               $listenerFunction = 'sensorConsoElec';
             } else {
@@ -315,6 +367,9 @@ class humidity extends eqLogic {
           $this->cleanAllListener();
 
         }
+
+        // a la fin du save, on lance l'évaluation selon humidité actuelle et consigne si besoin de on ou off
+        $this->evaluateHumidity();
 
 
     }
@@ -394,6 +449,20 @@ class humidityCmd extends cmd {
         log::add('humidity', 'info', $this->getHumanName() . ' - OFF');
 
         $eqLogic->cmdOnOff(0);
+
+      } else if ($this->getLogicalId() == 'humidity_target') { // appel de la commande action slider dashboard pour la consigne
+
+        log::add('humidity', 'info', $this->getHumanName() . ' - Nouvelle consigne from dashboard : ' . $_options['slider']);
+
+        // on assigne notre nouvelle valeur à la cmd info
+        $order = $eqLogic->getCmd(null, 'order');
+        if (is_object($order)) {
+          $order->setCollectDate('');
+          $order->event($_options['slider']);
+        }
+
+        // et on lance l'évaluation selon humidité actuelle et consigne si besoin de on ou off
+        $eqLogic->evaluateHumidity();
 
       } else { // sinon c'est un sensor et on veut juste sa valeur
 
