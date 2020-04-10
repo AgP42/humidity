@@ -20,6 +20,7 @@
 // Gerer l'ajout de chauffage pour mieux deshumidifier
 // ajouter seuils pour ne pas bagoter autour de la consigne
 // ajouter seuils detection non-conso
+// ajouter des tags pour les msg
 
 /* * ***************************Includes********************************* */
 require_once __DIR__  . '/../../../../core/php/core.inc.php';
