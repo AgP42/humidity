@@ -122,19 +122,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
             </div>
 
             <div class="form-group">
-              <label class="col-sm-2 control-label">{{Consigne}}<sup><i class="fas fa-question-circle tooltips" title="{{}}"></i></sup></label>
-              <div class="col-sm-4">
-                <div class="input-group">
-                  <input type="text" class="eqLogicAttr form-control tooltips roundedLeft" data-l1key="configuration" data-l2key="target_humidity"/>
-                  <span class="input-group-btn">
-                    <a class="btn btn-default listCmdInfo roundedRight"><i class="fa fa-list-alt"></i></a>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="col-sm-2 control-label">{{Sonde humidité}}<sup><i class="fas fa-question-circle tooltips" title="{{}}"></i></sup></label>
+              <label class="col-sm-2 control-label">{{Sonde humidité}}<!-- <sup><i class="fas fa-question-circle tooltips" title="{{}}"></i></sup> --></label>
               <div class="col-sm-4">
                 <div class="input-group">
                   <input type="text" class="eqLogicAttr form-control tooltips roundedLeft" data-l1key="configuration" data-l2key="sensor_humidity"/>
@@ -146,15 +134,43 @@ $eqLogics = eqLogic::byType($plugin->getId());
             </div>
 
             <div class="form-group">
-              <label class="col-sm-2 control-label">{{Puissance électrique}}<sup><i class="fas fa-question-circle tooltips" title="{{}}"></i></sup></label>
-              <div class="col-sm-4">
+              <label class="col-sm-2 control-label">{{Consigne}}<sup><i class="fas fa-question-circle tooltips" title="{{Valeur fixe ou une commande de type info (d'un virtuel par exemple). Dans tous les cas la consigne peut être modifiée via le dashboard.}}"></i></sup></label>
+              <div class="col-sm-2">
                 <div class="input-group">
-                  <input type="text" class="eqLogicAttr form-control tooltips roundedLeft" data-l1key="configuration" data-l2key="conso"/>
+                  <input type="text" class="eqLogicAttr form-control tooltips roundedLeft" data-l1key="configuration" data-l2key="target_humidity"/>
                   <span class="input-group-btn">
                     <a class="btn btn-default listCmdInfo roundedRight"><i class="fa fa-list-alt"></i></a>
                   </span>
                 </div>
               </div>
+
+              <label class="col-sm-1 control-label">{{Hystérésis}}<sup><i class="fas fa-question-circle tooltips" title="{{Seuil de tolérance autour de la consigne choisie. 0 par défaut.}}"></i></sup></label>
+              <div class="col-sm-1">
+                <div class="input-group">
+                  <input type="number" class="eqLogicAttr form-control tooltips roundedLeft" data-l1key="configuration" data-l2key="hysteresis"/>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="form-group">
+              <label class="col-sm-2 control-label">{{Puissance électrique}}<sup><i class="fas fa-question-circle tooltips" title="{{Facultatif - Permet de générer une alerte si l'équipement ne consomme plus (réservoir d'eau vide ou plein)}}"></i></sup></label>
+              <div class="col-sm-2">
+                <div class="input-group">
+                  <input type="text" class="eqLogicAttr form-control tooltips roundedLeft" data-l1key="configuration" data-l2key="puissance_elec"/>
+                  <span class="input-group-btn">
+                    <a class="btn btn-default listCmdInfo roundedRight"><i class="fa fa-list-alt"></i></a>
+                  </span>
+                </div>
+              </div>
+
+              <label class="col-sm-1 control-label">{{Seuil min}}<sup><i class="fas fa-question-circle tooltips" title="{{Seuil de puissance en dessous duquel l'équipement est considéré arrêté. 0 par défaut.}}"></i></sup></label>
+              <div class="col-sm-1">
+                <div class="input-group">
+                  <input type="number" class="eqLogicAttr form-control tooltips roundedLeft" data-l1key="configuration" data-l2key="seuil_elec"/>
+                </div>
+              </div>
+
             </div>
 
           </fieldset>
@@ -172,7 +188,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 
         <form class="form-horizontal">
           <fieldset>
-            <legend><i class="fas fa-toggle-on"></i> {{Pour lancer, je dois ?}} <sup><i class="fas fa-question-circle tooltips" title="{{}}"></i></sup>
+            <legend><i class="fas fa-toggle-on"></i> {{Pour lancer, je dois ?}} <sup><i class="fas fa-question-circle tooltips" title="{{Actions pour activer l'humidificateur ou le déshumidificateur}}"></i></sup>
               <a class="btn btn-success btn-sm addAction" data-type="action_on" style="margin:5px;"><i class="fas fa-plus-circle"></i> {{Ajouter une action}}</a>
             </legend>
             <div id="div_action_on"></div>
@@ -182,7 +198,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 
         <form class="form-horizontal">
           <fieldset>
-            <legend><i class="fas fa-toggle-off"></i> {{Pour arrêter, je dois ?}} <sup><i class="fas fa-question-circle tooltips" title="{{}}"></i></sup>
+            <legend><i class="fas fa-toggle-off"></i> {{Pour arrêter, je dois ?}} <sup><i class="fas fa-question-circle tooltips" title="{{Actions pour désactiver l'humidificateur ou le déshumidificateur}}"></i></sup>
               <a class="btn btn-success btn-sm addAction" data-type="action_off" style="margin:5px;"><i class="fas fa-plus-circle"></i> {{Ajouter une action}}</a>
             </legend>
             <div id="div_action_off"></div>
@@ -192,7 +208,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 
         <form class="form-horizontal">
           <fieldset>
-            <legend><i class="fas fa-child"></i> {{Pour alerter, je dois ?}} <sup><i class="fas fa-question-circle tooltips" title="{{Actions réalisées lorsque le plugin commande l'appareil mais la prise ne remonte pas de consommation. Celà signifie probablement que le réservoir de l'humidificateur est vide, ou celui du déshumidificateur est plein. }}"></i></sup>
+            <legend><i class="fas fa-child"></i> {{Pour alerter, je dois ?}} <sup><i class="fas fa-question-circle tooltips" title="{{Actions réalisées lorsque le plugin souhaite activer l'appareil mais il ne consomme pas d'électricité. Celà signifie probablement que le réservoir de l'humidificateur est vide, ou celui du déshumidificateur est plein. Pour les actions de type message vous pouvez utiliser les tags suivants : #humidity_name#, #humidity_value# ou #humidity_order#}}"></i></sup>
               <a class="btn btn-success btn-sm addAction" data-type="action_alert" style="margin:5px;"><i class="fas fa-plus-circle"></i> {{Ajouter une action}}</a>
             </legend>
             <div id="div_action_alert"></div>

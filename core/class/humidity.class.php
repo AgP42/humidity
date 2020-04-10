@@ -16,11 +16,8 @@
  * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// TODO : listener sur la consigne ?
+// TODO
 // Gerer l'ajout de chauffage pour mieux deshumidifier
-// ajouter seuils pour ne pas bagoter autour de la consigne
-// ajouter seuils detection non-conso
-// ajouter des tags pour les msg
 
 /* * ***************************Includes********************************* */
 require_once __DIR__  . '/../../../../core/php/core.inc.php';
@@ -58,7 +55,7 @@ class humidity extends eqLogic {
 
       $humidity = humidity::byId($_option['humidity_id']); // on prend l'eqLogic du trigger qui nous a appelé
 
-      log::add('humidity', 'debug', '################ listenerHumidity : ' . $_option['value'] . '% ############');
+      log::add('humidity', 'debug', '#=> Capteur humidité ou nouvelle consigne : ' . $_option['value'] . '% <=#');
 
       // il faut évaluer selon humidité actuelle et consigne si besoin de on ou off
       $humidity->evaluateHumidity();
@@ -66,11 +63,25 @@ class humidity extends eqLogic {
     }
 
 
-    public static function sensorConsoElec($_option) { // fct appelée par le listener de la conso elec
+    public static function sensorElec($_option) { // fct appelée par le listener de la puissance elec (si configuré)
+
 
       $humidity = humidity::byId($_option['humidity_id']); // on prend l'eqLogic du trigger qui nous a appelé
 
-      log::add('humidity', 'debug', '################ sensorConsoElec : ' . $_option['value'] . 'W ############');
+      $seuil_elec = $humidity->getConfiguration('seuil_elec');
+      if($seuil_elec == '') {
+        $seuil_elec = 0;
+      }
+      $puissance = $_option['value'];
+      $action = $humidity->getCache('action'); // 'action_on' ou 'action_off'
+
+      log::add('humidity', 'debug', '#=> Capteur Puissance Elec : ' . $puissance . 'W, seuil : ' . $seuil_elec . ' <=#');
+
+      if($action == 'action_on' && $puissance <= $seuil_elec) {
+        log::add('humidity', 'debug', 'Puissance en dessous du seuil alors que action_on en cours');
+        $humidity->execActions('action_alert');
+      }
+
 
     }
 
@@ -103,26 +114,38 @@ class humidity extends eqLogic {
 
         // On va aller chercher les infos
         $type = $this->getConfiguration('humidity_type'); //'humid' ou 'deshumid' => direct dans la conf
+        $hysteresis = $this->getConfiguration('hysteresis');
 
         $order = $this->getCmd(null, 'order');
         if (is_object($order)) {
           $target = $order->execCmd(); // la consigne => via la cmd info qui est actualisée soit via une autre cmd, soit via la conf, soit via le slider du dashboard
         }
 
+        $seuil_bas = $target - $hysteresis;
+        $seuil_haut = $target + $hysteresis;
+
         $value = jeedom::evaluateExpression($this->getConfiguration('sensor_humidity')); // valeur courante du capteur humidité
 
-        log::add('humidity', 'debug', 'type : ' . $type . ' - target : ' . $target . ' - value : ' . $value);
+        log::add('humidity', 'debug', 'type : ' . $type . ' - target : ' . $target . ' (' . $seuil_bas . ' - ' . $seuil_haut . ') '. ' - value : ' . $value);
 
         // On a toutes nos infos, on peut lancer la logique
 
-        if($type == 'humid' && $value <= $target){
+        if($type == 'humid' && $value <= $seuil_bas){
+
           $this->execActions('action_on');
-        } else if($type == 'humid' && $value > $target){
+
+        } else if($type == 'humid' && $value >= $seuil_haut){
+
           $this->execActions('action_off');
-        } else if($type == 'deshumid' && $value < $target){
+
+        } else if($type == 'deshumid' && $value <= $seuil_bas){
+
           $this->execActions('action_off');
-        } else if($type == 'deshumid' && $value >= $target){
+
+        } else if($type == 'deshumid' && $value >= $seuil_haut){
+
           $this->execActions('action_on');
+
         }
 
       }
@@ -133,20 +156,28 @@ class humidity extends eqLogic {
 
       log::add('humidity', 'debug', '################ Execution des actions du type ' . $_config . ' pour ' . $this->getName() .  ' ############');
 
+      $this->setCache('action', $_config); // on cache l'état demandé, pour la fonction de detection elec
+
+      // on recupere la consigne actuelle, pour le tag
+      $order = $this->getCmd(null, 'order');
+      if (is_object($order)) {
+        $target = $order->execCmd(); // la consigne => via la cmd info qui est actualisée soit via une autre cmd, soit via la conf, soit via le slider du dashboard
+      }
+
+      // valeur courante du capteur humidité, pour le tag
+      $humidity = jeedom::evaluateExpression($this->getConfiguration('sensor_humidity'));
+
       foreach ($this->getConfiguration($_config) as $action) { // on boucle pour executer toutes les actions définies
         try {
           $options = array(); // va permettre d'appeler les options de configuration des actions, par exemple un scenario un message
           if (isset($action['options'])) {
             $options = $action['options'];
-/*            foreach ($options as $key => $value) { // ici on peut définir les "tag" de configuration qui seront à remplacer par des variables
+            foreach ($options as $key => $value) { // ici on peut définir les "tag" de configuration qui seront à remplacer par des variables
               // str_replace ($search, $replace, $subject) retourne une chaîne ou un tableau, dont toutes les occurrences de search dans subject ont été remplacées par replace.
-              $value = str_replace('#senior_name#', $this->getName(), $value);
-              $value = str_replace('#sensor_name#', $_sensor_name, $value);
-              $value = str_replace('#sensor_type#', $_sensor_type, $value);
-              $value = str_replace('#sensor_value#', $_sensor_value, $value);
-              $value = str_replace('#low_threshold#', $_seuilBas, $value);
-              $options[$key] = str_replace('#high_threshold#', $_seuilHaut, $value);
-            }*/
+              $value = str_replace('#humidity_name#', $this->getName(), $value);
+              $value = str_replace('#humidity_value#', $humidity, $value);
+              $options[$key] = str_replace('#humidity_order#', $target, $value);
+            }
           }
           scenarioExpression::createAndExec('action', $action['cmd'], $options);
         } catch (Exception $e) {
@@ -297,13 +328,13 @@ class humidity extends eqLogic {
         $humidity->save();
 
 
-        if($this->getConfiguration('conso')!=''){ //si on a une commande de conso definie
+        if($this->getConfiguration('puissance_elec')!=''){ //si on a une commande de puissance_elec definie
 
-          $cmd = $this->getCmd(null, 'conso_elec');
+          $cmd = $this->getCmd(null, 'puissance_elec');
           if (!is_object($cmd)) {
             //ce qui est ici est declaré à la 1ere creation de l'objet seulement et donc peut etre changé par l'utilisateur par la suite
             $cmd = new humidityCmd();
-            $cmd->setLogicalId('conso_elec');
+            $cmd->setLogicalId('puissance_elec');
             $cmd->setIsVisible(1);
             $cmd->setIsHistorized(1);
             $cmd->setEqLogic_id($this->getId());
@@ -311,8 +342,8 @@ class humidity extends eqLogic {
           //ici apres, jeedom va utiliser ces infos a chaque fois que l'equipement est sauvegardé, si l'utilisateur le change, ces valeurs là re-écraseront les choix utilisateurs.
           $cmd->setConfiguration('historizeMode', 'avg');
           $cmd->setConfiguration('historizeRound', 0);
-          $cmd->setName(__('Consommation', __FILE__));
-          $cmd->setValue($this->getConfiguration('conso'));
+          $cmd->setName(__('Puissance', __FILE__));
+          $cmd->setValue($this->getConfiguration('puissance_elec'));
           $cmd->setType('info');
           $cmd->setSubType('numeric');
           $cmd->setUnite('W');
@@ -325,7 +356,13 @@ class humidity extends eqLogic {
           }
 
         } else {
-          log::add('humidity', 'warning', 'Pas de commande dans le champs consommation électrique');
+          log::add('humidity', 'debug', 'Pas de commande dans le champs consommation électrique');
+
+          // si on en avait une précédemment, on la vire, permet aussi de virer le listener associé (en dessous)
+          $cmd = $this->getCmd(null, 'puissance_elec');
+          if (is_object($cmd)) {
+            $cmd->remove();
+          }
         }
 
         // Mise en place des listeners de capteurs pour réagir aux events
@@ -341,8 +378,8 @@ class humidity extends eqLogic {
             // on assigne la fonction selon le type de capteur
             if ($cmd->getLogicalId() == 'sensor_humidity' || ($cmd->getLogicalId() == 'order' && !is_numeric($cmd->getValue()))) { // le capteur d'humidité et la consigne si c'est une cmd
               $listenerFunction = 'listenerHumidity';
-            } else if ($cmd->getLogicalId() == 'conso_elec') {
-              $listenerFunction = 'sensorConsoElec';
+            } else if ($cmd->getLogicalId() == 'puissance_elec') {
+              $listenerFunction = 'sensorElec';
             } else {
               continue; // sinon c'est que c'est pas un truc auquel on veut assigner un listener, on passe notre tour
             }
@@ -369,7 +406,8 @@ class humidity extends eqLogic {
 
         }
 
-        // a la fin du save, on lance l'évaluation selon humidité actuelle et consigne si besoin de on ou off
+        // a la fin du save, on declare ON et on lance l'évaluation selon humidité actuelle et consigne si besoin de on ou off
+        $this->setCache('etat', 1);
         $this->evaluateHumidity();
 
 
