@@ -89,7 +89,7 @@ class humidity extends eqLogic {
 
     public function cmdOnOff($_cmd) { // $_cmd=1 ou 0 selon si cmd recue demande ON ou OFF
 
-      log::add('humidity', 'debug', '################ Humidity ' . $_cmd . ' ############');
+    //  log::add('humidity', 'debug', '################ Humidity ' . $_cmd . ' ############');
 
       if($_cmd){ // ON demandé
 
@@ -110,7 +110,7 @@ class humidity extends eqLogic {
 
       if($this->getCache('etat') && $this->getIsEnable() == 1){ // seulement si on avait demandé ON et eq est actif. Si OFF ou inactif, on fait rien
 
-        log::add('humidity', 'debug', '################ evaluate Humidity ############');
+        log::add('humidity', 'debug', '################ Evaluate Humidity ############');
 
         // On va aller chercher les infos
         $type = $this->getConfiguration('humidity_type'); //'humid' ou 'deshumid' => direct dans la conf
@@ -248,18 +248,18 @@ class humidity extends eqLogic {
 
     public function postSave() {
 
+      log::add('humidity', 'info', 'Enregistrement de ' . $this->getHumanName());
+
         // creation des cmd à la sauvegarde de l'équipement
 
         $cmd = $this->getCmd(null, 'sensor_humidity');
         if (!is_object($cmd)) {
-          //ce qui est ici est declaré à la 1ere creation de l'objet seulement et donc peut etre changé par l'utilisateur par la suite
           $cmd = new humidityCmd();
           $cmd->setLogicalId('sensor_humidity');
           $cmd->setIsVisible(1);
           $cmd->setIsHistorized(1);
           $cmd->setEqLogic_id($this->getId());
         }
-        //ici apres, jeedom va utiliser ces infos a chaque fois que l'equipement est sauvegardé, si l'utilisateur le change, ces valeurs là re-écraseront les choix utilisateurs.
         $cmd->setConfiguration('historizeMode', 'avg');
         $cmd->setConfiguration('historizeRound', 0);
         $cmd->setName(__('Capteur humidité', __FILE__));
@@ -332,14 +332,12 @@ class humidity extends eqLogic {
 
           $cmd = $this->getCmd(null, 'puissance_elec');
           if (!is_object($cmd)) {
-            //ce qui est ici est declaré à la 1ere creation de l'objet seulement et donc peut etre changé par l'utilisateur par la suite
             $cmd = new humidityCmd();
             $cmd->setLogicalId('puissance_elec');
             $cmd->setIsVisible(1);
             $cmd->setIsHistorized(1);
             $cmd->setEqLogic_id($this->getId());
           }
-          //ici apres, jeedom va utiliser ces infos a chaque fois que l'equipement est sauvegardé, si l'utilisateur le change, ces valeurs là re-écraseront les choix utilisateurs.
           $cmd->setConfiguration('historizeMode', 'avg');
           $cmd->setConfiguration('historizeRound', 0);
           $cmd->setName(__('Puissance', __FILE__));
@@ -367,10 +365,10 @@ class humidity extends eqLogic {
 
         // Mise en place des listeners de capteurs pour réagir aux events
 
-        if ($this->getIsEnable() == 1) { // si notre eq est actif, on va lui definir nos listeners de capteurs
+        // un peu de menage dans nos events avant de remettre tout ca en ligne avec la conf actuelle
+        $this->cleanAllListener();
 
-          // un peu de menage dans nos events avant de remettre tout ca en ligne avec la conf actuelle
-          $this->cleanAllListener();
+        if ($this->getIsEnable() == 1) { // si notre eq est actif, on va lui definir nos listeners de capteurs
 
           // on boucle dans toutes les cmd existantes
           foreach ($this->getCmd() as $cmd) {
@@ -400,20 +398,22 @@ class humidity extends eqLogic {
 
           } // fin foreach cmd du plugin
         } // fin if eq actif
-        else { // notre eq n'est pas actif ou il a ete desactivé, on supprime les listeners s'ils existaient
-
-          $this->cleanAllListener();
-
-        }
 
         // a la fin du save, on declare ON et on lance l'évaluation selon humidité actuelle et consigne si besoin de on ou off
         $this->setCache('etat', 1);
         $this->evaluateHumidity();
 
+        log::add('humidity', 'debug', 'Fin enregistrement de ' . $this->getHumanName());
 
     }
 
+    // preUpdate ⇒ Méthode appellée avant la mise à jour de votre objet
+    // ici on vérifie la présence de nos champs de config obligatoire
     public function preUpdate() {
+
+      if ($this->getConfiguration('sensor_humidity') == '') {
+          throw new Exception(__('Le champs Sonde humidité ne peut être vide',__FILE__));
+      }
 
     }
 
@@ -491,7 +491,7 @@ class humidityCmd extends cmd {
 
       } else if ($this->getLogicalId() == 'humidity_target') { // appel de la commande action slider dashboard pour la consigne
 
-        log::add('humidity', 'info', $this->getHumanName() . ' - Nouvelle consigne from dashboard : ' . $_options['slider']);
+        log::add('humidity', 'info', $this->getHumanName() . ' -> ' . $_options['slider']);
 
         // on assigne notre nouvelle valeur à la cmd info
         $order = $eqLogic->getCmd(null, 'order');
@@ -505,7 +505,7 @@ class humidityCmd extends cmd {
 
       } else { // sinon c'est un sensor et on veut juste sa valeur
 
-        log::add('humidity', 'debug', 'Fct execute pour : ' . $this->getLogicalId() . $this->getHumanName() . '- valeur renvoyée : ' . jeedom::evaluateExpression($this->getValue()));
+        log::add('humidity', 'info', $this->getHumanName() . '-> ' . jeedom::evaluateExpression($this->getValue()));
 
         return jeedom::evaluateExpression($this->getValue());
 
