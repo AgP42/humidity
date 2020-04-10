@@ -19,6 +19,17 @@
 // TODO
 // Gerer l'ajout de chauffage pour mieux deshumidifier
 
+/*
+$cmd->execCmd() -> la valeur actuelle (precedente) --> la fct du core
+$cmd->execute() -> valeur actualisée --> notre fct en fin de class
+$cmd->event() -> set une nouvelle valeur
+
+       if (is_nan($cmd->execCmd()) || $cmd->execCmd() == '') {
+          $cmd->setCollectDate('');
+          $cmd->event($cmd->execute());
+        }
+        */
+
 /* * ***************************Includes********************************* */
 require_once __DIR__  . '/../../../../core/php/core.inc.php';
 
@@ -53,35 +64,31 @@ class humidity extends eqLogic {
 
     public static function listenerHumidity($_option) { // fct appelée par le listener du capteur d'humidité ou de la cmd de consigne
 
-      $humidity = humidity::byId($_option['humidity_id']); // on prend l'eqLogic du trigger qui nous a appelé
-
       log::add('humidity', 'debug', '#=> Capteur humidité ou nouvelle consigne : ' . $_option['value'] . '% <=#');
 
-      // il faut évaluer selon humidité actuelle et consigne si besoin de on ou off
-      $humidity->evaluateHumidity();
+      $humidity = humidity::byId($_option['humidity_id']); // on prend l'eqLogic du trigger qui nous a appelé
+      $humidity->evaluateHumidity(); // évaluer selon humidité actuelle et consigne si besoin de on ou off
 
     }
 
 
-    public static function sensorElec($_option) { // fct appelée par le listener de la puissance elec (si configuré)
-
+    public static function sensorElec($_option) { // fct appelée par le listener de la puissance elec (si configuré, sinon la cmd n'existe pas et le listener non plus, donc on risque pas d'arriver ici)
 
       $humidity = humidity::byId($_option['humidity_id']); // on prend l'eqLogic du trigger qui nous a appelé
 
       $seuil_elec = $humidity->getConfiguration('seuil_elec');
-      if($seuil_elec == '') {
+      if($seuil_elec == '') { // si pas défini => 0
         $seuil_elec = 0;
       }
       $puissance = $_option['value'];
-      $action = $humidity->getCache('action'); // 'action_on' ou 'action_off'
+      $action = $humidity->getCache('action'); // 1=>'action_on' ou 0=>'action_off'. On pourrait aussi utiliser la cmd humidity_state, mais ca fatigue moins Jeedom de jouer avec le cache que la DB
 
       log::add('humidity', 'debug', '#=> Capteur Puissance Elec : ' . $puissance . 'W, seuil : ' . $seuil_elec . ' <=#');
 
-      if($action == 'action_on' && $puissance <= $seuil_elec) {
+      if($action && $puissance <= $seuil_elec) {
         log::add('humidity', 'debug', 'Puissance en dessous du seuil alors que action_on en cours');
         $humidity->execActions('action_alert');
       }
-
 
     }
 
@@ -93,12 +100,12 @@ class humidity extends eqLogic {
 
       if($_cmd){ // ON demandé
 
-        $this->setCache('etat', 1);
+        $this->setCache('mode', 1);
         $this->evaluateHumidity(); // il faut évaluer selon humidité actuelle et consigne si besoin de on ou off
 
       } else { // OFF demandé, on coupe
 
-        $this->setCache('etat', 0);
+        $this->setCache('mode', 0);
         $this->execActions('action_off');
 
       }
@@ -108,7 +115,7 @@ class humidity extends eqLogic {
     public function evaluateHumidity() {
 
 
-      if($this->getCache('etat') && $this->getIsEnable() == 1){ // seulement si on avait demandé ON et eq est actif. Si OFF ou inactif, on fait rien
+      if($this->getCache('mode') && $this->getIsEnable() == 1){ // seulement si on avait demandé ON et eq est actif. Si OFF ou inactif, on fait rien
 
         log::add('humidity', 'debug', '################ Evaluate Humidity ############');
 
@@ -156,7 +163,31 @@ class humidity extends eqLogic {
 
       log::add('humidity', 'debug', '################ Execution des actions du type ' . $_config . ' pour ' . $this->getName() .  ' ############');
 
-      $this->setCache('action', $_config); // on cache l'état demandé, pour la fonction de detection elec
+      if($_config == 'action_on'){
+
+        // on enregistre l'état
+        $cmd_state = $this->getCmd(null, 'humidity_state');
+        if (is_object($cmd_state)) {
+          $cmd_state->setCollectDate('');
+          $cmd_state->event(1);
+        }
+
+        $this->setCache('action', 1); // pour la fonction de detection elec
+
+      } else if($_config == 'action_off'){
+
+        // on enregistre l'état
+        $cmd_state = $this->getCmd(null, 'humidity_state');
+        if (is_object($cmd_state)) {
+          $cmd_state->setCollectDate('');
+          $cmd_state->event(0);
+        }
+
+        $this->setCache('action', 0); // pour la fonction de detection elec
+
+      } /*else if ($_config == 'action_alert'){
+
+      }*/
 
       // on recupere la consigne actuelle, pour le tag
       $order = $this->getCmd(null, 'order');
@@ -183,7 +214,9 @@ class humidity extends eqLogic {
         } catch (Exception $e) {
           log::add('seniorcare', 'error', $this->getHumanName() . __(' : Erreur lors de l\'éxecution de ', __FILE__) . $action['cmd'] . __('. Détails : ', __FILE__) . $e->getMessage());
         }
-      } //*/
+      }
+
+      log::add('humidity', 'debug', '################ FIN Execution des actions du type ' . $_config . ' pour ' . $this->getName() .  ' ############');
 
     }
 
@@ -235,6 +268,21 @@ class humidity extends eqLogic {
       $cmd->setEqLogic_id($this->getId());
       $cmd->setType('action');
       $cmd->setSubType('other');
+      $cmd->setIsVisible(1);
+      $cmd->setIsHistorized(1);
+      $cmd->setConfiguration('historizeMode', 'none');
+      $cmd->save();
+
+
+      $cmd = $this->getCmd(null, 'humidity_state');
+      if (!is_object($cmd)) {
+        $cmd = new humidityCmd();
+        $cmd->setName(__('Etat', __FILE__));
+      }
+      $cmd->setLogicalId('humidity_state');
+      $cmd->setEqLogic_id($this->getId());
+      $cmd->setType('info');
+      $cmd->setSubType('binary');
       $cmd->setIsVisible(1);
       $cmd->setIsHistorized(1);
       $cmd->setConfiguration('historizeMode', 'none');
@@ -312,8 +360,8 @@ class humidity extends eqLogic {
         $humidity = $this->getCmd(null, 'humidity_target');
         if (!is_object($humidity)) {
           $humidity = new humidityCmd();
-          $humidity->setTemplate('dashboard', 'humidity');
-          $humidity->setTemplate('mobile', 'humidity');
+      //    $humidity->setTemplate('dashboard', 'humidity');
+      //    $humidity->setTemplate('mobile', 'humidity');
           $humidity->setUnite('%');
           $humidity->setName(__('Changer Consigne', __FILE__));
           $humidity->setIsVisible(1);
@@ -374,7 +422,7 @@ class humidity extends eqLogic {
           foreach ($this->getCmd() as $cmd) {
 
             // on assigne la fonction selon le type de capteur
-            if ($cmd->getLogicalId() == 'sensor_humidity' || ($cmd->getLogicalId() == 'order' && !is_numeric($cmd->getValue()))) { // le capteur d'humidité et la consigne si c'est une cmd
+            if ($cmd->getLogicalId() == 'sensor_humidity' || ($cmd->getLogicalId() == 'order' && !is_numeric($cmd->getValue()) && $cmd->getValue() != '')) { // le capteur d'humidité et la consigne si c'est une cmd
               $listenerFunction = 'listenerHumidity';
             } else if ($cmd->getLogicalId() == 'puissance_elec') {
               $listenerFunction = 'sensorElec';
@@ -400,7 +448,7 @@ class humidity extends eqLogic {
         } // fin if eq actif
 
         // a la fin du save, on declare ON et on lance l'évaluation selon humidité actuelle et consigne si besoin de on ou off
-        $this->setCache('etat', 1);
+        $this->setCache('mode', 1);
         $this->evaluateHumidity();
 
         log::add('humidity', 'debug', 'Fin enregistrement de ' . $this->getHumanName());
