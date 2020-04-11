@@ -69,24 +69,54 @@ Exemples
 Changer la consigne
 ---
 
+Pour toutes les méthodes décrites ci-dessous, un changement de la consigne sera prise en compte immédiatement.
+
+Le mode (On/Off) n'est pas modifié à la réception d'une nouvelle valeur de consigne. (Ainsi si le plugin était sur "Off", il ne passe pas sur "On" pour autant)
+
 ###via un Virtuel et appel API
+
+Créez un virtuel avec une commande de type info :
+
+![](https://raw.githubusercontent.com/AgP42/humidity/master/docs/assets/images/consigne_scenario.png)
+
+Dans le plugin "Gestion Humidité", utilisez cette commande dans le champs "Consigne".
+
+Toute modification de la valeur de cette commande sera immédiatement prise en compte comme la nouvelle consigne dans le plugin.
+
+Vous pouvez changer cette valeur par un appel API http avec l'une des commandes suivantes (voir la [documentation du plugin Virtuel](https://jeedom.github.io/plugin-virtual/fr_FR/)) :
+* http://#IP_JEEDOM#/core/api/jeeApi.php?apikey=#VIRTUAL_APIKEY#&type=virtual&id=#CMD_ID#&value=#VOTRE_CONSIGNE#
+* http://#IP_JEEDOM#/core/api/jeeApi.php?plugin=virtual&apikey=#VIRTUAL_APIKEY#&type=virtual&id=#CMD_ID#&value=#VOTRE_CONSIGNE#
 
 ###via un scenario
 
+Appelez la commande "Changer consigne" via un scenario avec la valeur voulue. La prise en compte par le plugin est immédiate.
+
+![](https://raw.githubusercontent.com/AgP42/humidity/master/docs/assets/images/consigne_scenario.png)
+
 ###via une variable
 
-Piloter son humidificateur/déshumidificateur
+
+
+Piloter son humidificateur/déshumidificateur (On/Off)
 ---
 
 ###selon les HP/HC (via un scenario)
+
+Dans un scénario déclenché par le changement d'état HP/HC :
+
+![](https://raw.githubusercontent.com/AgP42/humidity/master/docs/assets/images/hphc_scenario.png)
+
+###Appel API
+
+Dans l'onglet "Commandes" du plugin "Gestion Humidité", cliquer sur le bouton de configuration de la commande "On" ou "Off" puis sur "URL directe". Utiliser cet URL via l'extérieur pour appeller la commande On ou Off. Par exemple via IFTTT ou via Tasker (Android) ou n'importe quel autre service.
 
 ###via d'autres plugins
 
 Vous pouvez notamment utiliser les plugin suivants pour commander votre appareil :
 
-* [Mode](https://jeedom.github.io/plugin-mode/fr_FR/)
-* [Agenda](https://jeedom.github.io/plugin-calendar/fr_FR/)
-* [Presence](https://ticed35.github.io/jeedom-presence-doc/fr_FR/)
+* [Mode](https://jeedom.github.io/plugin-mode/fr_FR/) => Gestion On/Off
+* [Agenda](https://jeedom.github.io/plugin-calendar/fr_FR/) => Gestion On/Off
+* [Presence](https://ticed35.github.io/jeedom-presence-doc/fr_FR/) => Gestion On/Off
 
 Ou même le lier à votre chauffage via le plugin [Thermostat](https://jeedom.github.io/plugin-thermostat/fr_FR/), sachant qu'un déshumidificateur sera d'autant plus efficace que la température est élevée.
 

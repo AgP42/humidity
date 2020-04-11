@@ -553,9 +553,9 @@ class humidityCmd extends cmd {
 
       } else { // sinon c'est un sensor et on veut juste sa valeur
 
-        log::add('humidity', 'info', $this->getHumanName() . '-> ' . jeedom::evaluateExpression($this->getValue()));
+        log::add('humidity', 'info', $this->getHumanName() . '-> ' . str_replace('#', '', jeedom::evaluateExpression($this->getValue())));
 
-        return jeedom::evaluateExpression($this->getValue());
+        return str_replace('#', '', jeedom::evaluateExpression($this->getValue())); // s'il y a des '#' (cas d'une variable), on les vire et on prend que le resultat
 
       }
 
