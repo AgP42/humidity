@@ -5,3 +5,4 @@
 
 * 1ère version
 * Création documentation
+* Testée sous Jeedom v4.0.49 et v3.3.45
