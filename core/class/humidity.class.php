@@ -205,6 +205,10 @@ class humidity extends eqLogic {
             $options = $action['options'];
             foreach ($options as $key => $value) { // ici on peut définir les "tag" de configuration qui seront à remplacer par des variables
               // str_replace ($search, $replace, $subject) retourne une chaîne ou un tableau, dont toutes les occurrences de search dans subject ont été remplacées par replace.
+
+              $value = str_replace('#humidity_state#', $this->getCache('action')?'Allumé':'Eteint', $value);
+              $value = str_replace('#humidity_mode#', $this->getCache('mode')?'On':'Off', $value);
+
               $value = str_replace('#humidity_name#', $this->getName(), $value);
               $value = str_replace('#humidity_value#', $humidity, $value);
               $options[$key] = str_replace('#humidity_order#', $target, $value);
