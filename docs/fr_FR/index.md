@@ -95,7 +95,7 @@ Vous pouvez modifier la valeur par un appel API http sous le format suivant (voi
 
 Créez un virtuel avec une commande de type info :
 
-![](https://raw.githubusercontent.com/AgP42/humidity/master/docs/assets/images/consigne_scenario.png)
+![](https://raw.githubusercontent.com/AgP42/humidity/master/docs/assets/images/consigne_virtuel.png)
 
 Dans le champs "Consigne" du plugin, utilisez cette commande (via le bouton de sélection de commandes).
 
@@ -121,7 +121,7 @@ Dans un scénario déclenché par le changement d'état HP/HC :
 
 ### Appel API
 
-Dans l'onglet "Commandes" du plugin "Gestion Humidité", cliquer sur le bouton de configuration de la commande "On" ou "Off" puis sur "URL directe". Utiliser cet URL via l'extérieur pour appeller la commande On ou Off. Par exemple via IFTTT ou via Tasker (Android) ou n'importe quel autre service.
+Dans l'onglet "Commandes" du plugin, cliquer sur le bouton de configuration de la commande "On" ou "Off" puis sur "URL directe". Utiliser cet URL via l'extérieur pour appeller la commande On ou Off. Par exemple via IFTTT ou via Tasker (Android) ou n'importe quel autre service.
 
 ### via d'autres plugins
 
@@ -136,4 +136,4 @@ Ou même le lier à votre chauffage via le plugin [Thermostat](https://jeedom.gi
 Support
 ===
 
-* Pour toute demande de support, d'information, remonter un bug ou faire une demande d'évolution : [Forum Jeedom](https://community.jeedom.com/c/plugins/wellness/51)
+Pour toute demande de support, d'information, remonter un bug ou faire une demande d'évolution : [Forum Jeedom](https://community.jeedom.com/c/plugins/wellness/51)
