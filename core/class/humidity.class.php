@@ -92,6 +92,28 @@ class humidity extends eqLogic {
 
     }
 
+    public static function sensorWater($_option) { // fct appelée par le listener du capteur d'eau (si configuré, sinon la cmd n'existe pas et le listener non plus, donc on risque pas d'arriver ici)
+
+      $humidity = humidity::byId($_option['humidity_id']); // on prend l'eqLogic du trigger qui nous a appelé
+
+      $etat = $_option['value'];
+      log::add('humidity', 'debug', '#=> Sonde niveau d\'eau (avant inversion éventuelle): ' . $etat . ' <=#');
+
+      if ($humidity->getConfiguration('invert') == 1) { // on retourne la valeur si invert est coché
+        $etat = $etat ? 0 : 1;
+      }
+
+      $etat_prev = $humidity->getCache('etat_eau_prev');
+
+      if($etat != $etat_prev && $etat == 1) {
+        log::add('humidity', 'info', 'Sonde niveau d\'eau en alerte');
+        $humidity->execActions('action_alert');
+      }
+
+      $etat_prev = $humidity->setCache('etat_eau_prev', $etat); // on enregistre l'état courant (inversée ou non selon la config)
+
+    }
+
     /*     * *********************Méthodes d'instance************************* */
 
     public function cmdOnOff($_cmd) { // $_cmd=1 ou 0 selon si cmd recue demande ON ou OFF
@@ -391,7 +413,7 @@ class humidity extends eqLogic {
             $cmd->setEqLogic_id($this->getId());
           }
           $cmd->setConfiguration('historizeMode', 'avg');
-          $cmd->setConfiguration('historizeRound', 0);
+          $cmd->setConfiguration('historizeRound', 2);
           $cmd->setName(__('Puissance', __FILE__));
           $cmd->setValue($this->getConfiguration('puissance_elec'));
           $cmd->setType('info');
@@ -415,6 +437,39 @@ class humidity extends eqLogic {
           }
         }
 
+        if($this->getConfiguration('sonde_eau')!=''){ //si on a une commande de sonde_eau definie
+
+          $cmd = $this->getCmd(null, 'sonde_eau');
+          if (!is_object($cmd)) {
+            $cmd = new humidityCmd();
+            $cmd->setLogicalId('sonde_eau');
+            $cmd->setIsVisible(1);
+            $cmd->setIsHistorized(1);
+            $cmd->setEqLogic_id($this->getId());
+          }
+          $cmd->setConfiguration('historizeMode', 'none');
+          $cmd->setName(__('Sonde eau', __FILE__));
+          $cmd->setValue($this->getConfiguration('sonde_eau'));
+          $cmd->setType('info');
+          $cmd->setSubType('binary');
+          $cmd->save();
+
+          // va chopper la valeur de la commande puis la suivre a chaque changement
+          if (is_nan($cmd->execCmd()) || $cmd->execCmd() == '') {
+            $cmd->setCollectDate('');
+            $cmd->event($cmd->execute());
+          }
+
+        } else {
+          log::add('humidity', 'debug', 'Pas de commande dans le champs sonde niveau d\'eau');
+
+          // si on en avait une précédemment, on la vire, permet aussi de virer le listener associé (en dessous)
+          $cmd = $this->getCmd(null, 'sonde_eau');
+          if (is_object($cmd)) {
+            $cmd->remove();
+          }
+        }
+
         // Mise en place des listeners de capteurs pour réagir aux events
 
         // un peu de menage dans nos events avant de remettre tout ca en ligne avec la conf actuelle
@@ -430,6 +485,8 @@ class humidity extends eqLogic {
               $listenerFunction = 'listenerHumidity';
             } else if ($cmd->getLogicalId() == 'puissance_elec') {
               $listenerFunction = 'sensorElec';
+            } else if ($cmd->getLogicalId() == 'sonde_eau') {
+              $listenerFunction = 'sensorWater';
             } else {
               continue; // sinon c'est que c'est pas un truc auquel on veut assigner un listener, on passe notre tour
             }

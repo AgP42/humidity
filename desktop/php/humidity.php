@@ -154,7 +154,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
             </div>
 
             <div class="form-group">
-              <label class="col-sm-2 control-label">{{Puissance électrique}}<sup><i class="fas fa-question-circle tooltips" title="{{Facultatif - Permet de générer une alerte si l'équipement ne consomme plus (réservoir d'eau vide ou plein)}}"></i></sup></label>
+              <label class="col-sm-2 control-label">{{Puissance électrique (facultatif)}}<sup><i class="fas fa-question-circle tooltips" title="{{Facultatif - Permet de générer une alerte si l'équipement ne consomme plus (réservoir d'eau vide ou plein)}}"></i></sup></label>
               <div class="col-sm-2">
                 <div class="input-group">
                   <input type="text" class="eqLogicAttr form-control tooltips roundedLeft" data-l1key="configuration" data-l2key="puissance_elec"/>
@@ -173,6 +173,23 @@ $eqLogics = eqLogic::byType($plugin->getId());
 
             </div>
 
+            <div class="form-group">
+              <label class="col-sm-2 control-label">{{Sonde niveau d'eau (facultatif)}}<sup><i class="fas fa-question-circle tooltips" title="{{Facultatif - Permet de générer une alerte si la sonde détecte un réservoir plein ou vide}}"></i></sup></label>
+              <div class="col-sm-2">
+                <div class="input-group">
+                  <input type="text" class="eqLogicAttr form-control tooltips roundedLeft" data-l1key="configuration" data-l2key="sonde_eau"/>
+                  <span class="input-group-btn">
+                    <a class="btn btn-default listCmdInfo roundedRight"><i class="fa fa-list-alt"></i></a>
+                  </span>
+                </div>
+              </div>
+
+              <div class="col-sm-1">
+                <label class="checkbox-inline"><input type="checkbox" class="eqLogicAttr tooltips" data-l1key="configuration" data-l2key="invert"/>{{Inverser}}<sup><i class="fas fa-question-circle tooltips" title="{{Cochez pour que l'alerte soit générée lorsque le capteur remonte l'état 0.}}"></i></sup></label></span>
+              </div>
+
+            </div>
+
           </fieldset>
         </form>
 
@@ -182,9 +199,9 @@ $eqLogics = eqLogic::byType($plugin->getId());
       <div class="tab-pane" id="actionstab">
 
         <br/>
-        <div class="alert alert-info">
+<!--         <div class="alert alert-info">
           {{}}
-        </div>
+        </div> -->
 
         <form class="form-horizontal">
           <fieldset>
