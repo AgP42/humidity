@@ -3,6 +3,8 @@ Présentation
 
 Ce plugin permet de gérer un humidificateur ou un déshumidificateur, non connecté, via une prise connectée et une sonde d'humidité.
 
+Vous pouvez aussi l'utiliser pour piloter une VMC (plugin en mode "déshumidificateur).
+
 Changelog
 ==========
 
@@ -25,6 +27,7 @@ Configurez votre équipement :
 * **Hystérésis** : Il s'agit de la valeur de tolérance souhaitée autour de la consigne donnée. Par exemple si votre consigne est à 60% avec un hystérésis de 5%, un humidificateur sera actif jusqu'à 65% puis il ne se réenclenchera qu'en dessous de 55%. Ceci permet de ne pas constamment déclencher/couper l'appareil lorsque l'humidité de la pièce est proche de la consigne. Par défaut l'hystérésis est à 0.
 * **Puissance électrique** : Champs facultatif permettant de suivre le fonctionnement effectif de l'appareil et de générer une alerte en conséquence. Un humidificateur n'ayant plus d'eau ou un déshumidificateur dont le réservoir est plein ne consommeront plus autant que lors de leur fonctionnement nominal.
 * **Seuil min** : seuil minimum de consommation de l'appareil en fonctionnement nominal. Ce seuil permet de générer l'alerte lorsque la puissance devient inférieure au seuil. Par exemple pour un humidificateur consommant 8W en nominal et 1W en veille (lorsque son réservoir est vide), une bonne valeur est un seuil de 2W. Valeur par défaut : 0W
+* **Sonde niveau d'eau** : Champs facultatif permettant de déclarer une sonde de niveau d'eau pour générer une alerte directement selon l'état de ce capteur. L'alerte ne sera envoyée qu'au front montant (ou descendant si la case "inverser" est cochée), c'est à dire lors du passage de 0 à 1.
 
 Onglet **Actions**
 ---

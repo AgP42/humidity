@@ -443,7 +443,7 @@ class humidity extends eqLogic {
           if (!is_object($cmd)) {
             $cmd = new humidityCmd();
             $cmd->setLogicalId('sonde_eau');
-            $cmd->setIsVisible(1);
+            $cmd->setIsVisible(0);
             $cmd->setIsHistorized(1);
             $cmd->setEqLogic_id($this->getId());
           }

@@ -11,3 +11,5 @@
 ---
 
 * Ajout input sonde binaire pour niveau d'eau pour alerte de réservoir plein/vide
+* Update documentation
+* Testée sous Jeedom v4.0.49
