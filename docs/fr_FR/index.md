@@ -34,7 +34,7 @@ Onglet **Actions**
 
 ![](https://raw.githubusercontent.com/AgP42/humidity/master/docs/assets/images/OngletActions.png)
 
-Cet onglet permet de configurer les actions à réaliser pour activer et arrêter votre appareil, ainsi que les actions d'alertes (uniquement disponible si **Puissance électrique** est renseigné).
+Cet onglet permet de configurer les actions à réaliser pour activer et arrêter votre appareil, ainsi que les actions d'alertes (uniquement disponible si **Puissance électrique** ou **Sonde niveau d'eau** est renseigné).
 Vous pouvez configurer plusieurs actions par état, elles seront réalisées simultanément.
 
 Infos sur les actions :
