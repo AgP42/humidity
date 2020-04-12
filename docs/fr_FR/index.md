@@ -37,7 +37,11 @@ Vous pouvez configurer plusieurs actions par état, elles seront réalisées sim
 Infos sur les actions :
 * Les actions peuvent être le lancement d'un scenario si besoin.
 * Sachant qu'un déshumidificateur sera d'autant plus efficace que la température est élevée, vous pouvez choisir de déclencher un chauffage en même temps que votre déshumidificateur.
-* Vous pouvez vous envoyer une notification pour mettre à jour un widget android, via Tasker, à chaque changement d'état par exemple.
+* Vous pouvez vous envoyer des messages pour mettre à jour un widget android, via Tasker, à chaque changement d'état par exemple. Ou pour suivre chaque changement de consigne ou nouvelle valeur d'humidité.
+* Les actions de lancement sont appelées lorsque le plugin est sur "On" et à **chaque nouvelle valeur de consigne ou d'humidité** si la consigne n'est pas atteinte.
+* Les actions d'arrêt sont appelées :
+   * Une fois lors que le plugin passe sur "Off"
+   * Lorsque le plugin est sur "On" et à **chaque nouvelle valeur de consigne ou d'humidité** si la consigne est atteinte.
 * Pour les actions de type message vous pouvez utiliser les tags suivants :
    * #humidity_name# => le nom de l'équipement donné dans l'onglet "Equipement"
    * #humidity_value# => la valeur courante de l'humidité dans la pièce
@@ -82,7 +86,9 @@ Le mode (On/Off) n'est pas modifié à la réception d'une nouvelle valeur de co
 
 ### via une variable (et appel API)
 
-Créer une variable (Outils/Variables/Ajouter).
+Créer une variable :
+* jeedom v4 : Outils/Variables/Ajouter
+* jeedom v3 : Outils/Scenarios/Voir Variables/Ajouter
 
 Dans le champs "Consigne" du plugin, utiliser cette variable, sans oublier de l'entourer par des '#'. Exemple : '#variable(consigne_humidity)#'.
 

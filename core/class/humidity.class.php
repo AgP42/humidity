@@ -161,7 +161,7 @@ class humidity extends eqLogic {
 
     public function execActions($_config) { // on donne le type d'action en argument et ca nous execute toute la liste
 
-      log::add('humidity', 'debug', '################ Execution des actions du type ' . $_config . ' pour ' . $this->getName() .  ' ############');
+      log::add('humidity', 'info', '=> Execution des actions du type ' . $_config . ' pour ' . $this->getName());
 
       if($_config == 'action_on'){
 
