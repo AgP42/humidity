@@ -3,7 +3,7 @@ Présentation
 
 Ce plugin permet de gérer un humidificateur ou un déshumidificateur, non connecté, via une prise connectée et une sonde d'humidité.
 
-Vous pouvez aussi l'utiliser pour piloter une VMC (plugin en mode "déshumidificateur).
+Vous pouvez aussi l'utiliser pour piloter une VMC ou des ventilateurs.
 
 Changelog
 ==========
@@ -25,8 +25,15 @@ Configurez votre équipement :
 * **Sonde humidité** : la commande de type info donnant la valeur de l'humidité à proximité de l'appareil
 * **Consigne** : la consigne d'humidité souhaitée. Cette consigne peut être une valeur fixe ou une commande de type info (d'un virtuel par exemple) ou une variable (format '#variable(ma_var)#'). Utilisez un virtuel ou une variable pour changer la valeur de la consigne via une requête http de l'API. Dans tous les cas la consigne peut être modifiée via le dashboard. Voir les exemples ci-dessous.
 * **Hystérésis** : Il s'agit de la valeur de tolérance souhaitée autour de la consigne donnée. Par exemple si votre consigne est à 60% avec un hystérésis de 5%, un humidificateur sera actif jusqu'à 65% puis il ne se réenclenchera qu'en dessous de 55%. Ceci permet de ne pas constamment déclencher/couper l'appareil lorsque l'humidité de la pièce est proche de la consigne. Par défaut l'hystérésis est à 0.
+
+Configuration pour la génération des actions d'alertes (facultatif) :
 * **Puissance électrique** : Champs facultatif permettant de suivre le fonctionnement effectif de l'appareil et de générer une alerte en conséquence. Un humidificateur n'ayant plus d'eau ou un déshumidificateur dont le réservoir est plein ne consommeront plus autant que lors de leur fonctionnement nominal.
-* **Seuil min** : seuil minimum de consommation de l'appareil en fonctionnement nominal. Ce seuil permet de générer l'alerte lorsque la puissance devient inférieure au seuil. Par exemple pour un humidificateur consommant 8W en nominal et 1W en veille (lorsque son réservoir est vide), une bonne valeur est un seuil de 2W. Valeur par défaut : 0W
+* Seuils :
+   * **Seuil min** : seuil minimum de consommation de l'appareil en fonctionnement nominal. Ce seuil permet de générer l'alerte lorsque la puissance devient inférieure au seuil. Par exemple pour un humidificateur consommant 8W en nominal et 1W en veille (lorsque son réservoir est vide), une bonne valeur est un seuil de 2W.
+   * **Seuil max** : seuil maximum de consommation de l'appareil en fonctionnement nominal. Ce seuil permet de générer l'alerte lors d'une surconsommation.
+   * Vous pouvez configurer un seuil min **et** un seuil max, dans ce cas les actions d'alertes (identique) seront exécutées dans les 2 cas.
+   * Vous devez configurer le seuil min **ou** le seuil max pour recevoir les alertes, il n'y a pas de valeur par défaut si les champs ne sont pas remplis.
+   * Lorsque les conditions d'alerte sont réunies, les actions d'alertes seront exécutées à chaque nouvelle valeur de puissance reçue. Ainsi si vous définissez un seuil max de 25W, vous recevrez une alerte si votre capteur de puissance remonte "26W", puis une autre alerte pour "27W", etc. Pour éviter ce comportement, vous pouvez configurer comme action d'alerte de couper l'appareil (qui n'est de toute façon plus en mesure de fonctionner !).
 * **Sonde niveau d'eau** : Champs facultatif permettant de déclarer une sonde de niveau d'eau pour générer une alerte directement selon l'état de ce capteur. L'alerte ne sera envoyée qu'au front montant (ou descendant si la case "inverser" est cochée), c'est à dire lors du passage de 0 à 1.
 
 Onglet **Actions**

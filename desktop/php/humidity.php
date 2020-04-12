@@ -154,7 +154,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
             </div>
 
             <div class="form-group">
-              <label class="col-sm-2 control-label">{{Puissance électrique (facultatif)}}<sup><i class="fas fa-question-circle tooltips" title="{{Facultatif - Permet de générer une alerte si l'équipement ne consomme plus (réservoir d'eau vide ou plein)}}"></i></sup></label>
+              <label class="col-sm-2 control-label">{{Puissance électrique (facultatif)}}<sup><i class="fas fa-question-circle tooltips" title="{{Facultatif - Permet de générer une alerte si l'équipement ne consomme plus (réservoir d'eau vide ou plein), ou s'il consomme trop.}}"></i></sup></label>
               <div class="col-sm-2">
                 <div class="input-group">
                   <input type="text" class="eqLogicAttr form-control tooltips roundedLeft" data-l1key="configuration" data-l2key="puissance_elec"/>
@@ -164,10 +164,17 @@ $eqLogics = eqLogic::byType($plugin->getId());
                 </div>
               </div>
 
-              <label class="col-sm-1 control-label">{{Seuil min}}<sup><i class="fas fa-question-circle tooltips" title="{{Seuil de puissance en dessous duquel l'équipement est considéré arrêté. 0 par défaut.}}"></i></sup></label>
+              <label class="col-sm-1 control-label">{{Seuil min}}<sup><i class="fas fa-question-circle tooltips" title="{{Seuil de puissance en dessous duquel l'équipement est considéré arrêté. Min ou max doit être renseigné pour activer l'alerte.}}"></i></sup></label>
               <div class="col-sm-1">
                 <div class="input-group">
                   <input type="number" class="eqLogicAttr form-control tooltips roundedLeft" data-l1key="configuration" data-l2key="seuil_elec"/>
+                </div>
+              </div>
+
+              <label class="col-sm-1 control-label">{{Seuil max}}<sup><i class="fas fa-question-circle tooltips" title="{{Seuil de puissance au-dessus duquel vous souhaitez recevoir une alerte. Min ou max doit être renseigné pour activer l'alerte.}}"></i></sup></label>
+              <div class="col-sm-1">
+                <div class="input-group">
+                  <input type="number" class="eqLogicAttr form-control tooltips roundedLeft" data-l1key="configuration" data-l2key="seuil_elec_max"/>
                 </div>
               </div>
 

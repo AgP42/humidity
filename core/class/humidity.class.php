@@ -77,16 +77,19 @@ class humidity extends eqLogic {
       $humidity = humidity::byId($_option['humidity_id']); // on prend l'eqLogic du trigger qui nous a appelé
 
       $seuil_elec = $humidity->getConfiguration('seuil_elec');
-      if($seuil_elec == '') { // si pas défini => 0
-        $seuil_elec = 0;
-      }
+      $seuil_elec_max = $humidity->getConfiguration('seuil_elec_max');
       $puissance = $_option['value'];
       $action = $humidity->getCache('action'); // 1=>'action_on' ou 0=>'action_off'. On pourrait aussi utiliser la cmd humidity_state, mais ca fatigue moins Jeedom de jouer avec le cache que la DB
 
-      log::add('humidity', 'debug', '#=> Capteur Puissance Elec : ' . $puissance . 'W, seuil : ' . $seuil_elec . ' <=#');
+/*      if($seuil_elec == '') { // si pas défini => 0
+        $seuil_elec = 0;
+      }
+      */
 
-      if($action && $puissance <= $seuil_elec) {
-        log::add('humidity', 'debug', 'Puissance en dessous du seuil alors que action_on en cours');
+      log::add('humidity', 'debug', '#=> Capteur Puissance Elec : ' . $puissance . 'W, seuil min : ' . $seuil_elec . ', seuil max : ' . $seuil_elec_max . ' <=#');
+
+      if($action && (($seuil_elec != '' && $puissance <= $seuil_elec) || ($seuil_elec_max != '' && $puissance >= $seuil_elec_max))) {
+        log::add('humidity', 'debug', 'Puissance hors seuil alors que action_on en cours');
         $humidity->execActions('action_alert');
       }
 

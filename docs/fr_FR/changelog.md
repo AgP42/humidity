@@ -13,3 +13,10 @@
 * Ajout input sonde binaire pour niveau d'eau pour alerte de réservoir plein/vide
 * Update documentation
 * Testée sous Jeedom v4.0.49
+
+0.0.3 - 12 avril 2020
+---
+
+* Ajout seuil haut pour alerte de surconsommation électrique
+* Update documentation
+* Testée sous Jeedom v4.0.49
