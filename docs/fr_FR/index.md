@@ -157,15 +157,15 @@ Pour toute demande de support, d'information, remonter un bug ou faire une deman
 Bonus - Utilisateurs avancés ! - Widget Android KWGT associé
 ===
 
-Pour les utilisateurs avancés, je vous partage les widget KWGT et Tasker Web Screen que j'ai modifiés pour visualiser et controler ce plugin via un smartphone Android : 
+Pour les utilisateurs avancés, je vous partage les widget KWGT et Tasker Web Screen que j'ai modifiés pour visualiser et controler ce plugin via un smartphone Android :
 
-![](https://raw.githubusercontent.com/AgP42/humidity/master/docs/assets/images/KWGT.png)
-![](https://raw.githubusercontent.com/AgP42/humidity/master/docs/assets/images/WebScreenConsigne.png)
-![](https://raw.githubusercontent.com/AgP42/humidity/master/docs/assets/images/WebScreenMode.png)
+![](https://raw.githubusercontent.com/AgP42/humidity/master/docs/assets/images/KWGT.jpg)
+![](https://raw.githubusercontent.com/AgP42/humidity/master/docs/assets/images/WebScreenConsigne.jpg)
+![](https://raw.githubusercontent.com/AgP42/humidity/master/docs/assets/images/WebScreenMode.jpg)
 
-Pour celà vous aurez besoin du plugin jeedom [TaskerAutoRemote](https://www.jeedom.com/market/index.php?v=d&plugin_id=3795), de Tasker (android) et de ses add-ons AutoRemote et AutoTools ainsi que de l'app de widget KWGT pro. 
+Pour celà vous aurez besoin du plugin jeedom [TaskerAutoRemote](https://www.jeedom.com/market/index.php?v=d&plugin_id=3795), de Tasker (android) et de ses add-ons AutoRemote et AutoTools ainsi que de l'app de widget KWGT pro.
 
-Sources : 
+Sources :
 [Le widget KWGT](https://github.com/AgP42/humidity/blob/master/docs/assets/kwgt/Humidity_Nest.kwgt) (Origine : bibliothèque de Komponents "Material Komponents" de Erik Bucik)
 [Web Screen Slider](https://github.com/AgP42/TaskerProjects/tree/master/AutoTools%20Web%20Screen/slider) (Design original : https://dribbble.com/shots/3529251-Thermostat-Knob-UI)
 
