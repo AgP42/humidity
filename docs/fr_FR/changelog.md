@@ -20,3 +20,8 @@
 * Ajout seuil haut pour alerte de surconsommation électrique
 * Update documentation
 * Testée sous Jeedom v4.0.49
+
+1.0.0 - 16 avril 2020
+---
+
+* Passage stable (pas de modification)
