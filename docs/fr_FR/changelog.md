@@ -25,3 +25,8 @@
 ---
 
 * Passage stable (pas de modification)
+
+1.0.1 - 17 avril 2020 (Pas encore sur le market)
+---
+
+* Rajout du code JS pour ajout automatique des champs quand focusout
