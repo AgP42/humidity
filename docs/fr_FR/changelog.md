@@ -25,3 +25,10 @@
 ---
 
 * Passage stable (pas de modification)
+
+1.0.1 - 19 avril 2020
+---
+
+* Rajout du code JS pour ajout automatique des champs quand focusout
+* Update doc pour nouveau liens Jeedom
+* Ajout check code (robustification)
