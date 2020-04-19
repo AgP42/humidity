@@ -63,12 +63,16 @@ class humidity extends eqLogic {
      */
 
     public static function listenerHumidity($_option) { // fct appelée par le listener du capteur d'humidité ou de la cmd de consigne
-
-      log::add('humidity', 'debug', '#=> Capteur humidité ou nouvelle consigne : ' . $_option['value'] . '% <=#');
-
       $humidity = humidity::byId($_option['humidity_id']); // on prend l'eqLogic du trigger qui nous a appelé
-      $humidity->evaluateHumidity(); // évaluer selon humidité actuelle et consigne si besoin de on ou off
 
+      if (is_object($humidity)) {
+        log::add('humidity', 'debug', '#=> Capteur humidité ou nouvelle consigne : ' . $_option['value'] . '% <=#');
+
+        $humidity->evaluateHumidity(); // évaluer selon humidité actuelle et consigne si besoin de on ou off
+
+        } else {
+          log::add('humidity', 'erreur', $humidity->getHumanName() . ' - Erreur lors de l\'exécution - EqLogic inconnu. Vérifiez l\'ID');
+        }
     }
 
 
@@ -76,22 +80,28 @@ class humidity extends eqLogic {
 
       $humidity = humidity::byId($_option['humidity_id']); // on prend l'eqLogic du trigger qui nous a appelé
 
-      $seuil_elec = $humidity->getConfiguration('seuil_elec');
-      $seuil_elec_max = $humidity->getConfiguration('seuil_elec_max');
-      $puissance = $_option['value'];
-      $action = $humidity->getCache('action'); // 1=>'action_on' ou 0=>'action_off'. On pourrait aussi utiliser la cmd humidity_state, mais ca fatigue moins Jeedom de jouer avec le cache que la DB
+      if (is_object($humidity)) {
 
-/*      if($seuil_elec == '') { // si pas défini => 0
-        $seuil_elec = 0;
-      }
+        $seuil_elec = $humidity->getConfiguration('seuil_elec');
+        $seuil_elec_max = $humidity->getConfiguration('seuil_elec_max');
+        $puissance = $_option['value'];
+        $action = $humidity->getCache('action'); // 1=>'action_on' ou 0=>'action_off'. On pourrait aussi utiliser la cmd humidity_state, mais ca fatigue moins Jeedom de jouer avec le cache que la DB
+
+  /*      if($seuil_elec == '') { // si pas défini => 0
+          $seuil_elec = 0;
+        }
       */
+        log::add('humidity', 'debug', '#=> Capteur Puissance Elec : ' . $puissance . 'W, seuil min : ' . $seuil_elec . ', seuil max : ' . $seuil_elec_max . ' <=#');
 
-      log::add('humidity', 'debug', '#=> Capteur Puissance Elec : ' . $puissance . 'W, seuil min : ' . $seuil_elec . ', seuil max : ' . $seuil_elec_max . ' <=#');
+        if($action && (($seuil_elec != '' && $puissance <= $seuil_elec) || ($seuil_elec_max != '' && $puissance >= $seuil_elec_max))) {
+          log::add('humidity', 'debug', 'Puissance hors seuil alors que action_on en cours');
+          $humidity->execActions('action_alert');
+        }
 
-      if($action && (($seuil_elec != '' && $puissance <= $seuil_elec) || ($seuil_elec_max != '' && $puissance >= $seuil_elec_max))) {
-        log::add('humidity', 'debug', 'Puissance hors seuil alors que action_on en cours');
-        $humidity->execActions('action_alert');
+      } else {
+        log::add('humidity', 'erreur', $humidity->getHumanName() . ' - Erreur lors de l\'exécution - EqLogic inconnu. Vérifiez l\'ID');
       }
+
 
     }
 
@@ -99,21 +109,25 @@ class humidity extends eqLogic {
 
       $humidity = humidity::byId($_option['humidity_id']); // on prend l'eqLogic du trigger qui nous a appelé
 
-      $etat = $_option['value'];
-      log::add('humidity', 'debug', '#=> Sonde niveau d\'eau (avant inversion éventuelle): ' . $etat . ' <=#');
+      if (is_object($humidity)) {
+        $etat = $_option['value'];
+        log::add('humidity', 'debug', '#=> Sonde niveau d\'eau (avant inversion éventuelle): ' . $etat . ' <=#');
 
-      if ($humidity->getConfiguration('invert') == 1) { // on retourne la valeur si invert est coché
-        $etat = $etat ? 0 : 1;
+        if ($humidity->getConfiguration('invert') == 1) { // on retourne la valeur si invert est coché
+          $etat = $etat ? 0 : 1;
+        }
+
+        $etat_prev = $humidity->getCache('etat_eau_prev');
+
+        if($etat != $etat_prev && $etat == 1) {
+          log::add('humidity', 'info', 'Sonde niveau d\'eau en alerte');
+          $humidity->execActions('action_alert');
+        }
+
+        $etat_prev = $humidity->setCache('etat_eau_prev', $etat); // on enregistre l'état courant (inversée ou non selon la config)
+      } else {
+        log::add('humidity', 'erreur', $humidity->getHumanName() . ' - Erreur lors de l\'exécution - EqLogic inconnu. Vérifiez l\'ID');
       }
-
-      $etat_prev = $humidity->getCache('etat_eau_prev');
-
-      if($etat != $etat_prev && $etat == 1) {
-        log::add('humidity', 'info', 'Sonde niveau d\'eau en alerte');
-        $humidity->execActions('action_alert');
-      }
-
-      $etat_prev = $humidity->setCache('etat_eau_prev', $etat); // on enregistre l'état courant (inversée ou non selon la config)
 
     }
 
